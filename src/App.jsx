@@ -2,6 +2,7 @@ import React from 'react'
 import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom'
 import UsersList from './components/UsersList'
 import UserDetails from './components/UserDetails'
+import AddUser from './components/AddUser'
 import './App.css'
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
             <Routes>
               <Route path="/" element={<UsersList />} />
               <Route path="/user/:userId" element={<UserDetails />} />
+              <Route path="/add-user" element={<AddUser />} />
               {/* Future routes will be added here */}
             </Routes>
           </div>
@@ -35,7 +37,7 @@ function App() {
 
         <footer className="app-footer">
           <div className="container">
-            <p>React App Demo - Components, State, Routing, Forms & Data Fetching</p>
+            <p>Link Plus React Challenge by Driat Hasani</p>
           </div>
         </footer>
       </div>

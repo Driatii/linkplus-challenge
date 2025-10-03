@@ -1,37 +1,34 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useDispatch, useSelector } from 'react-redux'
+import { 
+  fetchUsers, 
+  deleteUser, 
+  selectSortedUsers, 
+  selectLoading, 
+  selectError,
+  selectSortBy,
+  selectSortOrder,
+  setSortBy,
+  toggleSortOrder
+} from '../store/usersSlice'
 import './UsersList.css'
 
 const UsersList = () => {
-  const [users, setUsers] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
   const navigate = useNavigate()
+  const dispatch = useDispatch()
+  
+  // Redux selectors
+  const users = useSelector(selectSortedUsers)
+  const loading = useSelector(selectLoading)
+  const error = useSelector(selectError)
+  const sortBy = useSelector(selectSortBy)
+  const sortOrder = useSelector(selectSortOrder)
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        setLoading(true)
-        setError(null)
-        
-        const response = await fetch('https://jsonplaceholder.typicode.com/users')
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-        
-        const userData = await response.json()
-        setUsers(userData)
-      } catch (err) {
-        setError(err.message)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchUsers()
-  }, [])
+    dispatch(fetchUsers())
+  }, [dispatch])
 
   // Filter users based on search term
   const filteredUsers = users.filter(user =>
@@ -41,6 +38,25 @@ const UsersList = () => {
 
   const handleUserClick = (userId) => {
     navigate(`/user/${userId}`)
+  }
+
+  const handleDeleteUser = (e, userId) => {
+    e.stopPropagation() // Prevent navigation when clicking delete
+    if (window.confirm('Are you sure you want to delete this user?')) {
+      dispatch(deleteUser(userId))
+    }
+  }
+
+  const handleSortChange = (newSortBy) => {
+    if (sortBy === newSortBy) {
+      dispatch(toggleSortOrder())
+    } else {
+      dispatch(setSortBy(newSortBy))
+    }
+  }
+
+  const handleAddUser = () => {
+    navigate('/add-user')
   }
 
   if (loading) {
@@ -74,10 +90,17 @@ const UsersList = () => {
 
   return (
     <div className="users-container">
-      <h2 className="users-title">Users List</h2>
-      <p className="users-subtitle">
-        Fetched from JSONPlaceholder API - {users.length} users found
-      </p>
+      <div className="users-header">
+        <div className="header-content">
+          <h2 className="users-title">Users List</h2>
+          <p className="users-subtitle">
+            Manage users - {users.length} users total
+          </p>
+        </div>
+        <button onClick={handleAddUser} className="add-user-button">
+          + Add User
+        </button>
+      </div>
       
       {/* Search Bar */}
       <div className="search-container">
@@ -97,6 +120,29 @@ const UsersList = () => {
           </p>
         )}
       </div>
+
+      {/* Sorting Controls */}
+      <div className="sorting-controls">
+        <span className="sort-label">Sort by:</span>
+        <button 
+          className={`sort-button ${sortBy === 'name' ? 'active' : ''}`}
+          onClick={() => handleSortChange('name')}
+        >
+          Name {sortBy === 'name' && (sortOrder === 'asc' ? '↑' : '↓')}
+        </button>
+        <button 
+          className={`sort-button ${sortBy === 'email' ? 'active' : ''}`}
+          onClick={() => handleSortChange('email')}
+        >
+          Email {sortBy === 'email' && (sortOrder === 'asc' ? '↑' : '↓')}
+        </button>
+        <button 
+          className={`sort-button ${sortBy === 'company' ? 'active' : ''}`}
+          onClick={() => handleSortChange('company')}
+        >
+          Company {sortBy === 'company' && (sortOrder === 'asc' ? '↑' : '↓')}
+        </button>
+      </div>
       
       <div className="users-grid">
         {filteredUsers.map(user => (
@@ -105,6 +151,13 @@ const UsersList = () => {
             className="user-card clickable"
             onClick={() => handleUserClick(user.id)}
           >
+            <button 
+              className="delete-button"
+              onClick={(e) => handleDeleteUser(e, user.id)}
+              title="Delete user"
+            >
+              ✕
+            </button>
             <div className="user-avatar">
               {user.name.charAt(0).toUpperCase()}
             </div>
@@ -127,6 +180,7 @@ const UsersList = () => {
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="website-link"
+                    onClick={(e) => e.stopPropagation()}
                   >
                     {user.website}
                   </a>

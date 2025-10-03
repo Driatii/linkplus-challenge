@@ -1,39 +1,27 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useSelector } from 'react-redux'
+import { selectUsers } from '../store/usersSlice'
 import './UserDetails.css'
 
 const UserDetails = () => {
-  const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const { userId } = useParams()
   const navigate = useNavigate()
+  const users = useSelector(selectUsers)
+  
+  // Find user from Redux store or fetch if not available
+  const user = users.find(u => u.id.toString() === userId)
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        setLoading(true)
-        setError(null)
-        
-        const response = await fetch(`https://jsonplaceholder.typicode.com/users/${userId}`)
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-        
-        const userData = await response.json()
-        setUser(userData)
-      } catch (err) {
-        setError(err.message)
-      } finally {
-        setLoading(false)
-      }
+    if (!user && users.length === 0) {
+      // If no users in store yet, we might need to fetch them
+      setLoading(true)
+    } else {
+      setLoading(false)
     }
-
-    if (userId) {
-      fetchUser()
-    }
-  }, [userId])
+  }, [user, users.length])
 
   const handleBackClick = () => {
     navigate('/')
